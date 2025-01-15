@@ -2,7 +2,9 @@
   "name": "saya",
   "plugins": [],
   "modelProvider": "openai",
-  "clients": [],
+  "clients": [
+    "twitter"
+  ],
   "settings": {
     "secrets": {},
     "voice": {
