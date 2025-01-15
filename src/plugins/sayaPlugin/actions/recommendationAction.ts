@@ -22,10 +22,10 @@ Task: Extract recommendation details from the user conversation and return a JSO
 
 Based on the value of recommend_type, extract the relevant fields and ensure the format is correct. The output should include the following:
 
-recommend_type: Required, and must be one of the following types: kol, smart_money, meme_token.
+recommend_type: Required, and must be one of the following types: kol, smart, token.
 If recommend_type is kol, return the corresponding Twitter username as username.
-If recommend_type is smart_money, return the corresponding wallet address as wallet_address.
-If recommend_type is meme_token, return both tokenName and tokenAddress.
+If recommend_type is smart, return the corresponding wallet address as wallet_address.
+If recommend_type is token, return both tokenName and tokenAddress(CA).
 If no recommendation information can be extracted, return an empty JSON object {}.
 
 Example Input:
@@ -37,8 +37,8 @@ User conversations:
 Example Output:
 
 {"recommend_type": "kol", "username": "elonmusk"}
-{"recommend_type": "smart_money", "wallet_address": "0x123abc456def789ghi"}
-{"recommend_type": "meme_token", "tokenName": "DOGE", "tokenAddress": "0xdoge123abc456def"}
+{"recommend_type": "smart", "wallet_address": "0x123abc456def789ghi"}
+{"recommend_type": "token", "tokenName": "DOGE", "tokenAddress": "0xdoge123abc456def"}
 Start extracting recommendation details from the user conversation.
 `;
 
@@ -48,11 +48,11 @@ const recommendationSchema = z.union([
 		username: z.string(),
 	}),
 	z.object({
-		recommend_type: z.literal("smart_money"),
+		recommend_type: z.literal("smart"),
 		wallet_address: z.string(),
 	}),
 	z.object({
-		recommend_type: z.literal("meme_token"),
+		recommend_type: z.literal("token"),
 		tokenName: z.string(),
 		tokenAddress: z.string(),
 	}),
@@ -60,7 +60,7 @@ const recommendationSchema = z.union([
 
 export const recommendationAction: Action = {
 	description:
-		"Extract recommendation details from the user conversation. When the user has a recommendation intent, never call ignore action.",
+		"Determine whether it contains any praise, affirmation, or endorsement of a particular entity (e.g., a KOL, smart money, or a token), and extract details from the user conversation. ",
 	validate: (input) => {
 		return Promise.resolve(true);
 	},
@@ -83,15 +83,26 @@ async function handler(
 
 	const context = await makeContext(runtime, message, _state);
 
-	const content = await generateObjectDeprecated({
+	const content = await generateObject({
 		runtime,
 		context,
-		modelClass: ModelClass.MEDIUM,
+		modelClass: ModelClass.LARGE,
+		schema: recommendationSchema,
 	}).catch((e) => {
-		console.log("[recommendationAction] generateObject error = ", e);
+		console.error("[recommendationAction] generateObject error = ", e);
 	});
 
-	elizaLogger.log("[recommendationAction] response content = ", content);
+	elizaLogger.log(
+		"[recommendationAction] response content = ",
+		content && content.object
+	);
+
+	const result = recommendationSchema.safeParse(content ? content.object : {});
+
+	if (!result.success) {
+		elizaLogger.error("[recommendationAction] validation error");
+		return;
+	}
 
 	const account = await runtime.databaseAdapter.getAccountById(message.userId);
 	elizaLogger.log(
@@ -100,10 +111,7 @@ async function handler(
 		account.name
 	);
 
-	await commitRecommendation(
-		account.username,
-		recommendationSchema.parse(content)
-	).catch((e) => {
+	await commitRecommendation(account.username, result.data).catch((e) => {
 		elizaLogger.error(
 			"[recommendationAction] commit recommendation error = ",
 			e
@@ -141,9 +149,9 @@ async function commitRecommendation(
 
 	if (content.recommend_type === "kol") {
 		param.address = content.username;
-	} else if (content.recommend_type === "smart_money") {
+	} else if (content.recommend_type === "smart") {
 		param.address = content.wallet_address;
-	} else if (content.recommend_type === "meme_token") {
+	} else if (content.recommend_type === "token") {
 		param.address = content.tokenAddress;
 	}
 
