@@ -56,4 +56,6 @@ class MockService implements IService {
 	}
 }
 
-export const defaultService = new MockService();
+export const defaultService = !process.env.SAYA_HOST
+	? new MockService()
+	: new SayaService(process.env.SAYA_HOST);

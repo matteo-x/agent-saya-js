@@ -16,36 +16,43 @@ export const EscrowProvider: Provider = {
 	): Promise<any> {
 		elizaLogger.debug("[EscrowProvider] start getting information");
 
-		const escrowInfo = await defaultService.getInformation();
+		let result = "";
+		try {
+			const escrowInfo = await defaultService.getInformation();
 
-		const escrowInfoFormat = {
-			...escrowInfo,
-			portfoliosStr: escrowInfo.portfolios
-				.map(
-					(item) =>
-						`The token's name is ${item.tokenName}, the quantity held is ${item.amount}, and the average purchase price is ${item.price} `
-				)
-				.join(", "),
-			txHistoryStr: escrowInfo.txHistory
-				.map(
-					(item) =>
-						`At ${item.date}, ${item.amount} tokens of ${item.tokenName} were ${
-							item.isBuy ? "bought" : "sold"
-						}  at a price of ${item.price}`
-				)
-				.join(", "),
-		};
+			const escrowInfoFormat = {
+				...escrowInfo,
+				portfoliosStr: escrowInfo.portfolios
+					.map(
+						(item) =>
+							`The token's name is ${item.tokenName}, the quantity held is ${item.amount}, and the average purchase price is ${item.price} `
+					)
+					.join(", "),
+				txHistoryStr: escrowInfo.txHistory
+					.map(
+						(item) =>
+							`At ${item.date}, ${item.amount} tokens of ${
+								item.tokenName
+							} were ${item.isBuy ? "bought" : "sold"}  at a price of ${
+								item.price
+							}`
+					)
+					.join(", "),
+			};
 
-		const escrowTemplate =
-			"The escrow address is {{address}}, the current balance is {{balance}} SOL. \n" +
-			"The current roi is: {{roi}}. \n" +
-			"The portfolios are: {{portfoliosStr}}. \n" +
-			"The recent transactions are: {{txHistoryStr}}";
+			const escrowTemplate =
+				"The escrow address is {{address}}, the current balance is {{balance}} SOL. \n" +
+				"The current roi is: {{roi}}. \n" +
+				"The portfolios are: {{portfoliosStr}}. \n" +
+				"The recent transactions are: {{txHistoryStr}}";
 
-		const result = composeContext({
-			state: escrowInfoFormat as any as State,
-			template: escrowTemplate,
-		});
+			result = composeContext({
+				state: escrowInfoFormat as any as State,
+				template: escrowTemplate,
+			});
+		} catch (e) {
+			elizaLogger.error("[EscrowProvider] error = ", e);
+		}
 
 		elizaLogger.debug("[EscrowProvider] end getting information");
 
