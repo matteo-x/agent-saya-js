@@ -11,6 +11,7 @@ export class MixTwitterPostClient extends TwitterPostClient {
 
 	recordHistory: { timeStamp: number }[] = [];
 
+	// default is false, because the allow to use sdk is limited
 	enableSdk: boolean = false;
 
 	constructor(client: ClientBase, runtime: IAgentRuntime) {
@@ -29,8 +30,6 @@ export class MixTwitterPostClient extends TwitterPostClient {
 	}
 
 	shouldUseSdk() {
-		console.log("shouldUseSdk is called, this.enableSdk = ", this.enableSdk);
-
 		if (!this.enableSdk) {
 			return false;
 		}
