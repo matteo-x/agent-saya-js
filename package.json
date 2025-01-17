@@ -26,6 +26,7 @@
     "agent-twitter-client": "^0.0.18",
     "amqplib": "0.10.5",
     "better-sqlite3": "11.5.0",
+    "express": "^4.21.2",
     "fs": "0.0.1-security",
     "net": "1.0.2",
     "path": "0.12.7",

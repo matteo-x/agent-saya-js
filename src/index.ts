@@ -13,7 +13,7 @@ import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import { initializeDbCache } from "./cache/index.ts";
-import { character } from "./character.ts";
+import { character, sayaUUID } from "./character.ts";
 import { startChat } from "./chat/index.ts";
 import { initializeClients } from "./clients/index.ts";
 import {
@@ -23,6 +23,7 @@ import {
 } from "./config/index.ts";
 import { initializeDatabase } from "./database/index.ts";
 import { sayaPlugin } from "./plugins/sayaPlugin/index.ts";
+import { Request, Response } from "express";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -137,7 +138,10 @@ const startAgents = async () => {
 	console.log("characters", characters);
 	try {
 		for (const character of characters) {
-			await startAgent(character, directClient as DirectClient);
+			const runtime = await startAgent(character, directClient as DirectClient);
+			if (character.id === sayaUUID) {
+				extendDirectClient(directClient, runtime);
+			}
 		}
 	} catch (error) {
 		elizaLogger.error("Error starting agents:", error);
@@ -163,6 +167,44 @@ const startAgents = async () => {
 	elizaLogger.log("Chat started. Type 'exit' to quit.");
 	const chat = startChat(characters);
 	chat();
+};
+
+const extendDirectClient = (
+	directClient: DirectClient,
+	runtime: AgentRuntime
+) => {
+	directClient.app.post(
+		"/addTopicBlacklist",
+		async (req: Request, res: Response) => {
+			const agent = directClient;
+			const newAddList = req.body as string[];
+
+			const oldList =
+				(await runtime.cacheManager.get<string[]>("topic_black_list")) ?? [];
+
+			const newList = Array.from(new Set(oldList.concat(newAddList)));
+
+			runtime.cacheManager.set("topic_black_list", newList);
+
+			res.status(200).json({ success: true, list: newList });
+		}
+	);
+
+	directClient.app.post(
+		"/addUserBlacklist",
+		async (req: Request, res: Response) => {
+			const newAddList = req.body as string[];
+
+			const oldList =
+				(await runtime.cacheManager.get<string[]>("user_black_list")) ?? [];
+
+			const newList = Array.from(new Set(oldList.concat(newAddList)));
+
+			runtime.cacheManager.set("user_black_list", newList);
+
+			res.status(200).json({ success: true, list: newList });
+		}
+	);
 };
 
 startAgents().catch((error) => {

@@ -1,5 +1,6 @@
 {
   "name": "saya",
+  "id": "217ec97c-ae5a-41b7-9c50-7e8f342d4fa4",
   "plugins": [],
   "modelProvider": "openai",
   "clients": [

@@ -23,6 +23,7 @@ import {
 	wait,
 } from "./utils.ts";
 import { MixTwitterPostClient } from "./mixpost.ts";
+import { getUserBlacklist } from "./blacklist.ts";
 
 export const twitterMessageHandlerTemplate =
 	`
@@ -125,6 +126,10 @@ export class TwitterInteractionClient {
 
 		const twitterUsername = this.client.profile.username;
 		try {
+			const userBlacklist = new Set(
+				await getUserBlacklist(this.runtime.cacheManager)
+			);
+
 			// Check for mentions
 			const mentionCandidates = (
 				await this.client.fetchSearchTweets(
@@ -223,9 +228,13 @@ export class TwitterInteractionClient {
 			}
 
 			// Sort tweet candidates by ID in ascending order
-			uniqueTweetCandidates
+			uniqueTweetCandidates = uniqueTweetCandidates
 				.sort((a, b) => a.id.localeCompare(b.id))
-				.filter((tweet) => tweet.userId !== this.client.profile.id);
+				.filter(
+					(tweet) =>
+						tweet.userId !== this.client.profile.id &&
+						!userBlacklist.has(tweet.username)
+				);
 
 			// for each tweet candidate, handle the tweet
 			for (const tweet of uniqueTweetCandidates) {
