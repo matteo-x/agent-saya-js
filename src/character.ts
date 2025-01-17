@@ -1,5 +1,7 @@
 import { Character, defaultCharacter, ModelProviderName } from "@elizaos/core";
 
+export const sayaUUID = `217ec97c-ae5a-41b7-9c50-7e8f342d4fa4`;
+
 export const character: Character = {
 	...defaultCharacter,
 	// name: "Eliza",

@@ -1,4 +1,4 @@
-import { settings } from "@elizaos/core";
+import { settings, stringToUuid } from "@elizaos/core";
 import readline from "readline";
 
 const rl = readline.createInterface({
@@ -42,8 +42,10 @@ async function handleUserInput(input, agentId, roomId, userId, userName) {
 }
 
 export function startChat(characters) {
-	const roomId = "room-" + new Date().getDate().toString();
-	const user = "user-" + new Date().getDate().toString();
+	const random = (Math.random() * 100000000).toString();
+	const roomId = stringToUuid(random);
+	const user = stringToUuid(random + "user");
+
 	function chat() {
 		const agentId = characters[0].name ?? "Agent";
 		rl.question("You: ", async (input) => {
