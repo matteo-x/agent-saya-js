@@ -429,7 +429,11 @@ export class TwitterInteractionClient {
 
 		response.text = removeQuotes(response.text);
 
-		if (response.text) {
+		if (
+			response.text &&
+			response.action !== "NONE" &&
+			response.action !== "IGNORE"
+		) {
 			try {
 				const callback: HandlerCallback = async (response: Content) => {
 					let memories: Memory[];
@@ -506,12 +510,16 @@ export class TwitterInteractionClient {
 			} catch (error) {
 				elizaLogger.error(`Error sending response tweet: ${error}`);
 			}
+		} else {
+			elizaLogger.log(
+				`Tweet id = ${tweet.id}, no response action found, skipping`
+			);
 		}
 	}
 
 	async buildConversationThread(
 		tweet: Tweet,
-		maxReplies: number = 10
+		maxReplies: number = 3
 	): Promise<Tweet[]> {
 		const thread: Tweet[] = [];
 		const visited: Set<string> = new Set();
