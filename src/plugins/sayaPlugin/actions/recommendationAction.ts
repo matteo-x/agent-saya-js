@@ -28,6 +28,8 @@ If recommend_type is smart, return the corresponding wallet address as wallet_ad
 If recommend_type is token, return both tokenName and tokenAddress(CA).
 If no recommendation information can be extracted, return an empty JSON object {}.
 
+Note: Only return the details of the last matched recommendation.
+
 Example Input:
 User conversations:
 
